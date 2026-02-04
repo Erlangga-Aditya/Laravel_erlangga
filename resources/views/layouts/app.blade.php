@@ -15,12 +15,12 @@
     <!-- Custom Styles -->
     <style>
         :root {
-            --primary-color: #4F46E5;
-            --secondary-color: #7C3AED;
-            --success-color: #10B981;
-            --danger-color: #EF4444;
-            --warning-color: #F59E0B;
-            --info-color: #3B82F6;
+            --primary-color: #1e3a8a;  /* Deep Royal Blue */
+            --secondary-color: #3b82f6; /* Modern Sky Blue */
+            --success-color: #059669;   /* Emerald Green */
+            --danger-color: #dc2626;    /* Deep Red */
+            --warning-color: #d97706;   /* Rich Amber */
+            --info-color: #2563eb;      /* Bright Blue */
         }
         
         body {
@@ -164,11 +164,63 @@
         .alert {
             animation: slideDown 0.3s ease;
         }
+
+        /* Cursor Follower Effect */
+        /* Custom Cursor Guide */
+        .cursor-dot,
+        .cursor-follower {
+            position: fixed;
+            top: 0;
+            left: 0;
+            transform: translate(-50%, -50%);
+            border-radius: 50%;
+            z-index: 9999;
+            pointer-events: none;
+        }
+
+        @keyframes flicker {
+            0% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+            50% { transform: translate(-50%, -50%) scale(1.2); opacity: 0.8; }
+            100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        }
+
+        .cursor-dot {
+            width: 12px;
+            height: 12px;
+            background: radial-gradient(circle, #fbbf24 0%, #ef4444 100%); /* Yellow to Red */
+            box-shadow: 
+                0 0 10px #f59e0b,
+                0 0 20px #dc2626,
+                0 0 30px #b91c1c; /* Layered fire glow */
+            animation: flicker 0.1s infinite alternate; /* Fast flickering */
+        }
+
+        .cursor-follower {
+            width: 40px;
+            height: 40px;
+            border: 2px solid rgba(245, 158, 11, 0.5); /* Orange border */
+            background: rgba(220, 38, 38, 0.1); /* Faint red background */
+            box-shadow: 0 0 15px rgba(239, 68, 68, 0.4);
+            transition: transform 0.1s ease-out, background-color 0.2s, width 0.3s, height 0.3s;
+            mix-blend-mode: screen;
+        }
+
+        .cursor-active {
+            width: 70px;
+            height: 70px;
+            background: rgba(220, 38, 38, 0.2);
+            box-shadow: 0 0 50px rgba(245, 158, 11, 0.8);
+            border: 2px solid rgba(251, 191, 36, 0.6);
+        }
     </style>
     
     @yield('styles')
 </head>
 <body>
+    <!-- Cursor Elements -->
+    <div id="cursor-dot" class="cursor-dot"></div>
+    <div id="cursor-follower" class="cursor-follower"></div>
+
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container">
@@ -279,6 +331,57 @@
     
     <!-- Delete Confirmation Script -->
     <script>
+        // Custom Cursor Logic
+        document.addEventListener('DOMContentLoaded', function() {
+            const cursorDot = document.getElementById('cursor-dot');
+            const cursorFollower = document.getElementById('cursor-follower');
+            
+            let mouseX = 0;
+            let mouseY = 0;
+            let followerX = 0;
+            let followerY = 0;
+
+            document.addEventListener('mousemove', function(e) {
+                mouseX = e.clientX;
+                mouseY = e.clientY;
+                
+                // Dot moves instantly
+                cursorDot.style.left = mouseX + 'px';
+                cursorDot.style.top = mouseY + 'px';
+            });
+
+            // Smooth follower animation
+            function animateFollower() {
+                // Linear interpolation (Lerp) for smooth trailing
+                followerX += (mouseX - followerX) * 0.1;
+                followerY += (mouseY - followerY) * 0.1;
+
+                cursorFollower.style.left = followerX + 'px';
+                cursorFollower.style.top = followerY + 'px';
+
+                requestAnimationFrame(animateFollower);
+            }
+            animateFollower();
+
+            // Hover effects
+            const clickableElements = document.querySelectorAll('a, button, .btn, input, select, textarea, .card');
+            
+            clickableElements.forEach(el => {
+                el.addEventListener('mouseenter', () => {
+                    cursorFollower.classList.add('cursor-active');
+                    cursorDot.style.opacity = '0'; // Hide dot when hovering actionable items
+                });
+                
+                el.addEventListener('mouseleave', () => {
+                    cursorFollower.classList.remove('cursor-active');
+                    cursorDot.style.opacity = '1';
+                });
+            });
+
+            // Hide default cursor
+            document.body.style.cursor = 'none';
+        });
+
         setTimeout(function() {
             const alerts = document.querySelectorAll('.alert');
             alerts.forEach(function(alert) {
